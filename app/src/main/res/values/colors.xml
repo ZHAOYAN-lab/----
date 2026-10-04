@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 人間らしく親しみやすく、洗練されたモダン・ライトパレット -->
+    <!-- ブランド / メインアクセント: 信頼感のある上質なロイヤルブルー -->
+    <color name="primary">#2563EB</color>
+    <color name="primary_dark">#1D4ED8</color>
+    <color name="primary_light">#3B82F6</color>
+    <color name="primary_tint">#EFF6FF</color>
+
+    <color name="accent">#2563EB</color>
+    <color name="accent_light">#60A5FA</color>
+    <color name="accent_tint">#EFF6FF</color>
+
+    <!-- サーフェス & 背景: 目に優しく清潔感のあるオフホワイトとライトグレー -->
+    <color name="surface_bg">#F8F9FA</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="surface_elevated">#FFFFFF</color>
+    <color name="toolbar_bg">#FFFFFF</color>
+
+    <!-- ボーダー & ディバイダー: 極細で主張しすぎない上品なグレー -->
+    <color name="card_stroke">#E5E7EB</color>
+    <color name="card_stroke_subtle">#F3F4F6</color>
+    <color name="divider">#E5E7EB</color>
+
+    <!-- テキスト階層: コントラストが高く視認性に優れたチャコールグレー -->
+    <color name="text_primary">#111827</color>
+    <color name="text_secondary">#4B5563</color>
+    <color name="text_muted">#9CA3AF</color>
+    <color name="text_white">#FFFFFF</color>
+
+    <!-- ステータスバッジ（ソフトピル調） -->
+    <color name="online">#047857</color>
+    <color name="online_bg">#ECFDF5</color>
+    <color name="online_stroke">#A7F3D0</color>
+
+    <color name="warning">#B45309</color>
+    <color name="warning_bg">#FFFBEB</color>
+    <color name="warning_stroke">#FDE68A</color>
+
+    <color name="offline">#6B7280</color>
+    <color name="offline_bg">#F3F4F6</color>
+    <color name="offline_stroke">#E5E7EB</color>
+
+    <color name="danger">#DC2626</color>
+    <color name="danger_bg">#FEF2F2</color>
+</resources>

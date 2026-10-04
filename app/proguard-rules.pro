@@ -1,0 +1,4 @@
+-keep class com.example.basesdk.** { *; }
+-keep class RfidUtils.** { *; }
+-keep class uhf.** { *; }
+-dontwarn org.slf4j.**

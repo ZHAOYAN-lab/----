@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <com.journeyapps.barcodescanner.DecoratedBarcodeView
+        android:id="@+id/zxing_barcode_scanner"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:zxing_framing_rect_width="320dp"
+        app:zxing_framing_rect_height="160dp"
+        app:zxing_preview_scaling_strategy="centerCrop" />
+
+    <!-- Top Navigation Bar -->
+    <LinearLayout
+        android:id="@+id/scanner_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="#99000000"
+        android:fitsSystemWindows="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="10dp">
+
+        <ImageView
+            android:id="@+id/btn_scanner_back"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="戻る"
+            android:focusable="true"
+            android:padding="10dp"
+            android:src="@drawable/ic_back_white" />
+
+        <TextView
+            android:id="@+id/tv_scanner_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="バーコード / QRコード読取"
+            android:textColor="@android:color/white"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/btn_scanner_flash"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="フラッシュライト"
+            android:focusable="true"
+            android:padding="10dp"
+            android:src="@drawable/ic_flash_off_white" />
+    </LinearLayout>
+
+    <!-- Center / Viewfinder Hint -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="110dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp">
+
+        <TextView
+            android:id="@+id/tv_scanner_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#80000000"
+            android:gravity="center"
+            android:lineSpacingExtra="4dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:text="10桁バーコードまたはQRコードを\n枠内に水平に合わせてください"
+            android:textColor="@android:color/white"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Bottom Action Bar (Cancel / Exit) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#99000000"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingHorizontal="32dp"
+        android:paddingVertical="20dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_scanner_cancel"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="スキャンを中止して戻る"
+            android:textColor="@android:color/white"
+            android:textSize="15sp"
+            app:cornerRadius="12dp"
+            app:strokeColor="@android:color/white"
+            app:strokeWidth="1.5dp" />
+    </LinearLayout>
+
+</FrameLayout>

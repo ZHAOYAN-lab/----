@@ -1,0 +1,592 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F0F4F8"
+    android:orientation="vertical">
+
+    <!-- Top AppBar (Blue) -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#1E88E5"
+        android:fitsSystemWindows="true"
+        app:elevation="0dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="#1E88E5"
+            app:navigationIcon="@drawable/ic_back_white"
+            app:title="設定"
+            app:titleTextColor="#FFFFFF" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="14dp">
+
+            <!-- Row 1: Bluetoothロケーター / MINIロケーター -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Bluetoothロケーター"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/sw_bluetooth_base"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:checked="true"
+                    app:thumbTint="@color/switch_thumb_selector"
+                    app:trackTint="@color/switch_track_selector" />
+
+                <View
+                    android:layout_width="24dp"
+                    android:layout_height="1dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MINIロケーター"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/sw_mini_base"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:checked="true"
+                    app:thumbTint="@color/switch_thumb_selector"
+                    app:trackTint="@color/switch_track_selector" />
+            </LinearLayout>
+
+            <!-- BLE接続状態 + 探索ボタン -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_ble_status_config"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="● BLE: 未接続"
+                    android:textColor="#E53935"
+                    android:textSize="13sp" />
+
+                <Button
+                    android:id="@+id/btn_ble_scan_connect"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:paddingHorizontal="14dp"
+                    android:text="BLEデバイスを探す"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#1E88E5"
+                    style="@style/Widget.MaterialComponents.Button" />
+            </LinearLayout>
+
+            <!-- Row 2: デフォルトバインド情報を有効化 (カプセルスイッチ) -->
+
+            <LinearLayout
+                android:id="@+id/layout_default_bind"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_capsule_track"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp">
+
+                <TextView
+                    android:id="@+id/tv_default_bind_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="デフォルトバインド情報を有効化"
+                    android:textColor="#2B3A4A"
+                    android:textSize="14sp" />
+
+                <View
+                    android:id="@+id/view_default_bind_thumb"
+                    android:layout_width="64dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_capsule_thumb" />
+            </LinearLayout>
+
+            <!-- Row 3: 高速バインド / バインド遅延 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="高速バインド"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/sw_fast_bind"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:checked="true"
+                    app:thumbTint="@color/switch_thumb_selector"
+                    app:trackTint="@color/switch_track_selector" />
+
+                <View
+                    android:layout_width="16dp"
+                    android:layout_height="1dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="バインド遅延"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <EditText
+                    android:id="@+id/et_bind_delay"
+                    android:layout_width="68dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_config_input"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="200"
+                    android:textColor="#212121"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="ms"
+                    android:textColor="#333333"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Row 4: 音声通知 / 点灯時間 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="音声通知"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/sw_sound_prompt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:checked="true"
+                    app:thumbTint="@color/switch_thumb_selector"
+                    app:trackTint="@color/switch_track_selector" />
+
+                <View
+                    android:layout_width="16dp"
+                    android:layout_height="1dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="点灯時間"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <EditText
+                    android:id="@+id/et_light_duration"
+                    android:layout_width="68dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_config_input"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="60"
+                    android:textColor="#212121"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="秒"
+                    android:textColor="#333333"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Row 5: フラッシュ通知 / フラッシュ間隔 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="フラッシュ通知"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/sw_flash_prompt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:checked="true"
+                    app:thumbTint="@color/switch_thumb_selector"
+                    app:trackTint="@color/switch_track_selector" />
+
+                <View
+                    android:layout_width="16dp"
+                    android:layout_height="1dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="フラッシュ間隔"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <EditText
+                    android:id="@+id/et_flash_interval"
+                    android:layout_width="68dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_config_input"
+                    android:gravity="center"
+                    android:inputType="numberDecimal"
+                    android:text="1.0"
+                    android:textColor="#212121"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="秒"
+                    android:textColor="#333333"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Row 6: マルチカラー点滅 / カラー選択 固定カラー -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="マルチカラー点滅"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/sw_multi_color_cycle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:checked="false"
+                    app:thumbTint="@color/switch_thumb_selector"
+                    app:trackTint="@color/switch_track_selector" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:text="カラー選択"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <!-- カプセル: 固定カラー -->
+                <LinearLayout
+                    android:id="@+id/layout_fixed_color"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_capsule_track"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="10dp">
+
+                    <TextView
+                        android:id="@+id/tv_fixed_color_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="固定カラー"
+                        android:textColor="#2B3A4A"
+                        android:textSize="13sp" />
+
+                    <View
+                        android:id="@+id/view_fixed_color_thumb"
+                        android:layout_width="48dp"
+                        android:layout_height="28dp"
+                        android:background="@drawable/bg_capsule_thumb" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Row 7: 単一選択カラーグループ (赤 黄 青 緑 シアン 白 紫) -->
+            <RadioGroup
+                android:id="@+id/rg_colors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rb_red"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:buttonTint="#E53935"
+                    android:text="赤"
+                    android:textColor="#E53935"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <RadioButton
+                    android:id="@+id/rb_yellow"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:buttonTint="#FBC02D"
+                    android:text="黄"
+                    android:textColor="#FBC02D"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <RadioButton
+                    android:id="@+id/rb_blue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:buttonTint="#1E88E5"
+                    android:text="青"
+                    android:textColor="#1E88E5"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <RadioButton
+                    android:id="@+id/rb_green"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:buttonTint="#43A047"
+                    android:checked="true"
+                    android:text="緑"
+                    android:textColor="#43A047"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <RadioButton
+                    android:id="@+id/rb_cyan"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:buttonTint="#00ACC1"
+                    android:text="シアン"
+                    android:textColor="#00ACC1"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <RadioButton
+                    android:id="@+id/rb_white"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:buttonTint="#9E9E9E"
+                    android:text="白"
+                    android:textColor="#9E9E9E"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <RadioButton
+                    android:id="@+id/rb_purple"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:buttonTint="#8E24AA"
+                    android:text="紫"
+                    android:textColor="#8E24AA"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </RadioGroup>
+
+            <!-- Row 8: 棚卸し時間 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="棚卸し時間"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <EditText
+                    android:id="@+id/et_inventory_duration"
+                    android:layout_width="140dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="14dp"
+                    android:background="@drawable/bg_config_input"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="60"
+                    android:textColor="#212121"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="秒"
+                    android:textColor="#333333"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="注：60秒ごとに10秒を自動補充 + 追加10秒"
+                android:textColor="#757575"
+                android:textSize="12sp" />
+
+            <!-- Row 9: 電圧警告 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="電圧警告"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <EditText
+                    android:id="@+id/et_voltage_warning"
+                    android:layout_width="140dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="14dp"
+                    android:background="@drawable/bg_config_input"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="2600"
+                    android:textColor="#212121"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="mV"
+                    android:textColor="#333333"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Row 10: 信号フィルタ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="信号フィルタ"
+                    android:textColor="#333333"
+                    android:textSize="15sp" />
+
+                <EditText
+                    android:id="@+id/et_signal_filter"
+                    android:layout_width="140dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="14dp"
+                    android:background="@drawable/bg_config_input"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="90"
+                    android:textColor="#212121"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="24dp"
+                android:lineSpacingExtra="2dp"
+                android:text="注：BLEロケーター接続の信号フィルタ値（推奨初期値: 90）。値が小さいほど強い電波強度が必要となります。"
+                android:textColor="#757575"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Bottom Save Button (Full Width, Blue) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_save_config"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:backgroundTint="#1E88E5"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="設定を保存"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:cornerRadius="0dp" />
+
+</LinearLayout>

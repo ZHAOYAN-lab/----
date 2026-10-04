@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">ビーコンファインダー</string>
+    <string name="base_station">ロケーター</string>
+    <string name="scan_base">ロケータースキャン</string>
+    <string name="search_lan">LAN検索 / 手動</string>
+    <string name="connect">接続</string>
+    <string name="disconnect">切断</string>
+    <string name="cancel">キャンセル</string>
+    <string name="delete">削除</string>
+    <string name="scan_beacon">ビーコンスキャン</string>
+    <string name="registered_beacons">登録済みビーコン</string>
+    <string name="select_all">すべて選択</string>
+    <string name="light_selected">選択分を点灯</string>
+    <string name="stop_selected">選択分を消灯</string>
+    <string name="light">点灯</string>
+    <string name="flash">点滅</string>
+    <string name="beep">ビープ音</string>
+    <string name="color">LED色</string>
+    <string name="status_ready">準備完了</string>
+    <string name="status_not_connected">未接続</string>
+    <string name="status_connected">接続完了</string>
+    <string name="status_connecting">接続中…</string>
+    <string name="status_waiting_report">ステータス待機中</string>
+    <string name="empty_beacon_hint">ロケーターを追加後、ビーコンのQRコードをスキャンして追加してください</string>
+    <string name="scan_base_title">ロケーターバーコード / QR読取</string>
+    <string name="scan_beacon_title">ビーコンQRコード読取</string>
+    <string name="scan_base_prompt">ロケーターの10桁バーコードまたはQRコードを\n枠内に水平に合わせてください</string>
+    <string name="scan_beacon_prompt">ビーコンのQRコードを枠内に合わせてください</string>
+</resources>
