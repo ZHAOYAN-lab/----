@@ -21,7 +21,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@color/toolbar_bg"
             app:navigationIcon="@drawable/ic_back_dark"
-            app:title="Bluetoothロケーター設定"
+            app:title="@string/ui_a747f97419"
             app:titleTextColor="@color/text_primary" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -72,7 +72,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_weight="1"
-                            android:text="ポータブルBluetoothロケーター"
+                            android:text="@string/ui_b206efc585"
                             android:textColor="@color/text_primary"
                             android:textSize="16sp"
                             android:textStyle="bold" />
@@ -84,7 +84,7 @@
                             android:background="@drawable/bg_status_badge"
                             android:paddingHorizontal="10dp"
                             android:paddingVertical="4dp"
-                            android:text="● 未接続"
+                            android:text="@string/ui_6419161521"
                             android:textColor="@color/offline"
                             android:textSize="13sp"
                             android:textStyle="bold" />
@@ -95,7 +95,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:text="接続対象のBluetooth名称"
+                        android:text="@string/ui_47ad543d8a"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -113,7 +113,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:background="@null"
-                            android:hint="例: XY-FlashFind"
+                            android:hint="@string/ui_2b2e250bf8"
                             android:singleLine="true"
                             android:text="XY-FlashFind"
                             android:textColor="#0F172A"
@@ -134,7 +134,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="信号強度(RSSI)しきい値"
+                            android:text="@string/ui_212b9767b3"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp" />
 
@@ -168,7 +168,7 @@
                             android:layout_height="48dp"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1"
-                            android:text="周辺スキャン"
+                            android:text="@string/ui_6aaf29786a"
                             android:textColor="@color/accent"
                             android:textSize="14sp"
                             app:cornerRadius="12dp"
@@ -181,7 +181,7 @@
                             android:layout_height="48dp"
                             android:layout_marginStart="6dp"
                             android:layout_weight="1"
-                            android:text="接続開始"
+                            android:text="@string/ui_c89e59d053"
                             android:textColor="@color/text_white"
                             android:textSize="14sp"
                             app:backgroundTint="@color/accent"
@@ -217,7 +217,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="周辺Bluetoothデバイス"
+                            android:text="@string/ui_81319d0841"
                             android:textColor="@color/text_primary"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -227,7 +227,7 @@
                             style="@style/Widget.MaterialComponents.Button.TextButton"
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
-                            android:text="クリア"
+                            android:text="@string/ui_a8e5152705"
                             android:textColor="@color/text_muted"
                             android:textSize="12sp" />
                     </LinearLayout>
@@ -238,7 +238,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:paddingVertical="20dp"
-                        android:text="「周辺スキャン」をタップするとロケーターを検索します"
+                        android:text="@string/ui_ea1a3edac7"
                         android:textColor="@color/text_muted"
                         android:textSize="13sp" />
 
@@ -271,7 +271,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="ロケーターパラメータ &amp; テスト"
+                        android:text="@string/ui_69f230d1a7"
                         android:textColor="@color/text_primary"
                         android:textSize="15sp"
                         android:textStyle="bold" />
@@ -290,7 +290,7 @@
                             android:layout_height="44dp"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1"
-                            android:text="点灯テスト"
+                            android:text="@string/ui_bd0f5c9e23"
                             android:textColor="@color/primary"
                             android:textSize="13sp"
                             app:cornerRadius="10dp"
@@ -303,7 +303,7 @@
                             android:layout_height="44dp"
                             android:layout_marginStart="6dp"
                             android:layout_weight="1"
-                            android:text="全消灯"
+                            android:text="@string/ui_f7cf86f51a"
                             android:textColor="@color/text_secondary"
                             android:textSize="13sp"
                             app:cornerRadius="10dp"
@@ -323,7 +323,7 @@
                             android:layout_height="40dp"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1"
-                            android:text="バージョン確認"
+                            android:text="@string/ui_2d5fe4ee07"
                             android:textColor="@color/accent"
                             android:textSize="13sp" />
 
@@ -334,7 +334,7 @@
                             android:layout_height="40dp"
                             android:layout_marginStart="6dp"
                             android:layout_weight="1"
-                            android:text="待受間隔設定"
+                            android:text="@string/ui_415b636900"
                             android:textColor="@color/accent"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -367,7 +367,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="リアルタイム通信ログ"
+                            android:text="@string/ui_7a58f6272a"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
@@ -377,7 +377,7 @@
                             style="@style/Widget.MaterialComponents.Button.TextButton"
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
-                            android:text="ログ消去"
+                            android:text="@string/ui_22f119f6c5"
                             android:textColor="@color/text_muted"
                             android:textSize="12sp" />
                     </LinearLayout>
@@ -392,7 +392,7 @@
                         android:lineSpacingExtra="2dp"
                         android:padding="10dp"
                         android:scrollbars="vertical"
-                        android:text="準備完了\n"
+                        android:text="@string/ui_2606a4744b"
                         android:textColor="@color/text_secondary"
                         android:textSize="11sp" />
                 </LinearLayout>

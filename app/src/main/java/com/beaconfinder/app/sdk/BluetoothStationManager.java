@@ -322,8 +322,8 @@ public final class BluetoothStationManager implements MultiLableCallBack {
             // flash=false(常時点灯)の場合はbit7を立てる
             byte rgb = flash ? (byte) color : (byte) (color | 0x80);
             byte beepByte = (byte) (beep ? 0x01 : 0x00);
-            byte wt = (byte) Math.max(1, Math.min(127, workTimeSec / 3));
-            byte it = (byte) Math.max(1, Math.min(127, (int) (intervalSec * 10)));
+            byte wt = (byte) Math.max(1, Math.min(127, (int) Math.ceil(workTimeSec / 3.0)));
+            byte it = (byte) Math.max(1, Math.min(127, Math.round(intervalSec * 10)));
             List<byte[]> tagIds = toTagIds(codes);
             String result = readerController.SetAcoustOpticTagsWork(rfidClient, rgb, beepByte, tagIds, wt, it);
             log("点灯送信 → " + result + " (" + codes.size() + "件)");

@@ -21,7 +21,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="#1E88E5"
             app:navigationIcon="@drawable/ic_back_white"
-            app:title="設定"
+            app:title="@string/ui_6329f21c41"
             app:titleTextColor="#FFFFFF" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -48,7 +48,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Bluetoothロケーター"
+                    android:text="@string/ui_1a27510e96"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -68,7 +68,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="MINIロケーター"
+                    android:text="@string/ui_9758eb0249"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -95,7 +95,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="● BLE: 未接続"
+                    android:text="@string/ui_b078ce0c34"
                     android:textColor="#E53935"
                     android:textSize="13sp" />
 
@@ -104,7 +104,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:paddingHorizontal="14dp"
-                    android:text="BLEデバイスを探す"
+                    android:text="@string/ui_b428898fa7"
                     android:textSize="12sp"
                     android:textColor="#FFFFFF"
                     android:backgroundTint="#1E88E5"
@@ -127,7 +127,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="デフォルトバインド情報を有効化"
+                    android:text="@string/ui_6df8d9e24b"
                     android:textColor="#2B3A4A"
                     android:textSize="14sp" />
 
@@ -149,7 +149,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="高速バインド"
+                    android:text="@string/ui_b2181f42fb"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -169,7 +169,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="バインド遅延"
+                    android:text="@string/ui_0989f5d246"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -205,7 +205,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="音声通知"
+                    android:text="@string/ui_a94cfc4f1f"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -225,7 +225,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="点灯時間"
+                    android:text="@string/ui_29bb1072c3"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -245,7 +245,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
-                    android:text="秒"
+                    android:text="@string/ui_eb6aaba1a1"
                     android:textColor="#333333"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -261,7 +261,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="フラッシュ通知"
+                    android:text="@string/ui_097d6140bb"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -281,7 +281,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="フラッシュ間隔"
+                    android:text="@string/ui_45721655dd"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -301,7 +301,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
-                    android:text="秒"
+                    android:text="@string/ui_eb6aaba1a1"
                     android:textColor="#333333"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -317,7 +317,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="マルチカラー点滅"
+                    android:text="@string/ui_8854c85784"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -334,7 +334,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="14dp"
-                    android:text="カラー選択"
+                    android:text="@string/ui_201d678158"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -354,7 +354,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="固定カラー"
+                        android:text="@string/ui_d928c300ee"
                         android:textColor="#2B3A4A"
                         android:textSize="13sp" />
 
@@ -381,7 +381,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:buttonTint="#E53935"
-                    android:text="赤"
+                    android:text="@string/ui_72776ab68f"
                     android:textColor="#E53935"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -392,7 +392,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:buttonTint="#FBC02D"
-                    android:text="黄"
+                    android:text="@string/ui_7720f8ea0a"
                     android:textColor="#FBC02D"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -403,7 +403,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:buttonTint="#1E88E5"
-                    android:text="青"
+                    android:text="@string/ui_845d1da87f"
                     android:textColor="#1E88E5"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -415,7 +415,7 @@
                     android:layout_weight="1"
                     android:buttonTint="#43A047"
                     android:checked="true"
-                    android:text="緑"
+                    android:text="@string/ui_f22758bf8f"
                     android:textColor="#43A047"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -426,7 +426,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:buttonTint="#00ACC1"
-                    android:text="シアン"
+                    android:text="@string/ui_55018581ba"
                     android:textColor="#00ACC1"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -437,7 +437,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:buttonTint="#9E9E9E"
-                    android:text="白"
+                    android:text="@string/ui_4a1ae3cda4"
                     android:textColor="#9E9E9E"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -448,7 +448,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:buttonTint="#8E24AA"
-                    android:text="紫"
+                    android:text="@string/ui_01caea5810"
                     android:textColor="#8E24AA"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -465,7 +465,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="棚卸し時間"
+                    android:text="@string/ui_868c917b8d"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -485,7 +485,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="秒"
+                    android:text="@string/ui_eb6aaba1a1"
                     android:textColor="#333333"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -494,7 +494,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:text="注：60秒ごとに10秒を自動補充 + 追加10秒"
+                android:text="@string/ui_61d05b6415"
                 android:textColor="#757575"
                 android:textSize="12sp" />
 
@@ -509,7 +509,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="電圧警告"
+                    android:text="@string/ui_1a224a64a2"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -545,7 +545,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="信号フィルタ"
+                    android:text="@string/ui_0f7ba6ce00"
                     android:textColor="#333333"
                     android:textSize="15sp" />
 
@@ -568,7 +568,7 @@
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="24dp"
                 android:lineSpacingExtra="2dp"
-                android:text="注：BLEロケーター接続の信号フィルタ値（推奨初期値: 90）。値が小さいほど強い電波強度が必要となります。"
+                android:text="@string/ui_34b513f264"
                 android:textColor="#757575"
                 android:textSize="12sp" />
 
@@ -583,7 +583,7 @@
         android:backgroundTint="#1E88E5"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        android:text="設定を保存"
+        android:text="@string/ui_66fba5a6fa"
         android:textColor="#FFFFFF"
         android:textSize="16sp"
         android:textStyle="bold"

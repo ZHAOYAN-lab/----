@@ -32,16 +32,28 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.AdapterView;
 import com.beaconfinder.app.data.AppConfig;
 import com.beaconfinder.app.data.DeviceStore;
+import com.beaconfinder.app.data.WarehouseStore;
+import com.beaconfinder.app.data.SharedSync;
+import com.beaconfinder.app.sdk.WarehouseBridgeService;
+import com.beaconfinder.app.ui.WarehouseMapActivity;
 import com.beaconfinder.app.databinding.ActivityMainBinding;
+import com.beaconfinder.app.model.Area;
 import com.beaconfinder.app.model.BaseStation;
 import com.beaconfinder.app.model.Beacon;
+import com.beaconfinder.app.model.Product;
+import com.beaconfinder.app.model.Warehouse;
 import com.beaconfinder.app.sdk.BaseStationGateway;
 import com.beaconfinder.app.sdk.BluetoothStationManager;
 import com.beaconfinder.app.ui.BeaconAdapter;
 import com.beaconfinder.app.ui.ConfigActivity;
 import com.beaconfinder.app.ui.CustomScannerActivity;
+import com.beaconfinder.app.ui.ProductManageActivity;
+import com.beaconfinder.app.ui.WarehouseManageActivity;
 import com.google.zxing.client.android.Intents;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
@@ -58,11 +70,29 @@ import java.util.Map;
 public final class MainActivity extends AppCompatActivity
         implements BaseStationGateway.Listener, BeaconAdapter.Listener {
 
+    private final android.content.BroadcastReceiver sharedReceiver = new android.content.BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            refreshMainFilters();
+            baseAdapter.notifyDataSetChanged();
+            showCurrentBaseBeacons();
+        }
+    };
+    @Override protected void onStart() {
+        super.onStart();
+        ContextCompat.registerReceiver(this, sharedReceiver, new android.content.IntentFilter(SharedSync.UPDATED), ContextCompat.RECEIVER_NOT_EXPORTED);
+        SharedSync.get(this).sync(null);
+    }
+    @Override protected void onStop() {
+        unregisterReceiver(sharedReceiver);
+        super.onStop();
+    }
+
     private static final String TAG = "MainActivity";
     private enum ScanPurpose { BASE, BEACON }
 
     private ActivityMainBinding binding;
     private DeviceStore store;
+    private WarehouseStore warehouseStore;
     private BaseStationGateway gateway;
     private BeaconAdapter beaconAdapter;
     private ArrayAdapter<BaseStation> baseAdapter;
@@ -72,6 +102,14 @@ public final class MainActivity extends AppCompatActivity
     private boolean suppressSelectAllCallback;
     private boolean suppressConfigUpdate = false;
     private boolean userDisconnected = true;
+
+    private String mainSearchQuery = "";
+    private String mainFilterWarehouseId = "";
+    private String mainFilterAreaId = "";
+    private ArrayAdapter<String> mainWarehouseFilterAdapter;
+    private ArrayAdapter<String> mainAreaFilterAdapter;
+    private final List<Warehouse> mainFilterWarehouses = new ArrayList<>();
+    private final List<Area> mainFilterAreas = new ArrayList<>();
 
     private WifiManager.MulticastLock multicastLock;
     private WifiManager.WifiLock wifiLock;
@@ -104,7 +142,7 @@ public final class MainActivity extends AppCompatActivity
 
     @Override
     protected void attachBaseContext(Context newBase) {
-        Locale locale = Locale.JAPAN;
+        Locale locale = com.beaconfinder.app.data.AppLanguage.locale(newBase);
         Locale.setDefault(locale);
         android.content.res.Configuration config = new android.content.res.Configuration(newBase.getResources().getConfiguration());
         config.setLocale(locale);
@@ -126,8 +164,9 @@ public final class MainActivity extends AppCompatActivity
 
         acquireWifiLocks();
 
-        store = new DeviceStore(this);
-        gateway = new BaseStationGateway();
+        store = DeviceStore.getInstance(this);
+        warehouseStore = WarehouseStore.getInstance(this);
+        gateway = BaseStationGateway.getInstance();
         gateway.setListener(this);
         beaconAdapter = new BeaconAdapter(this);
 
@@ -140,7 +179,7 @@ public final class MainActivity extends AppCompatActivity
 
         ArrayAdapter<String> colorAdapter = new ArrayAdapter<>(this,
                 R.layout.item_spinner_selected,
-                new String[] {"赤", "黄", "青", "緑", "シアン", "白", "紫"});
+                new String[] {com.beaconfinder.app.data.AppLanguage.text("赤"), com.beaconfinder.app.data.AppLanguage.text("黄"), com.beaconfinder.app.data.AppLanguage.text("青"), com.beaconfinder.app.data.AppLanguage.text("緑"), com.beaconfinder.app.data.AppLanguage.text("シアン"), com.beaconfinder.app.data.AppLanguage.text("白"), com.beaconfinder.app.data.AppLanguage.text("紫")});
         colorAdapter.setDropDownViewResource(R.layout.item_spinner_dropdown);
         binding.colorSpinner.setAdapter(colorAdapter);
 
@@ -194,6 +233,14 @@ public final class MainActivity extends AppCompatActivity
         binding.lightSelectedButton.setOnClickListener(v -> controlSelected(false));
         binding.stopSelectedButton.setOnClickListener(v -> controlSelected(true));
 
+        binding.btnOpenWarehouse.setOnClickListener(v -> {
+            startActivity(new Intent(this, WarehouseManageActivity.class));
+        });
+        binding.btnOpenMap.setOnClickListener(v -> { startActivity(new Intent(this, WarehouseMapActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP)); finish(); });
+        WarehouseBridgeService.start(this);
+        binding.btnOpenProducts.setOnClickListener(v -> {
+            startActivity(new Intent(this, ProductManageActivity.class));
+        });
         binding.btnOpenConfig.setOnClickListener(v -> {
             startActivity(new Intent(this, ConfigActivity.class));
         });
@@ -201,8 +248,10 @@ public final class MainActivity extends AppCompatActivity
             startActivity(new Intent(this, ConfigActivity.class));
         });
 
+        setupMainSearchAndFilters();
+
         showCurrentBaseBeacons();
-        binding.operationStatus.setText("SDK v" + gateway.version() + " · 準備完了");
+        binding.operationStatus.setText("SDK v" + gateway.version() + com.beaconfinder.app.data.AppLanguage.text(" · 準備完了"));
 
         // 起動時にBLE/MINIロケーターを自動検索・接続
         checkAndRequestBlePermissions();
@@ -214,6 +263,11 @@ public final class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        if (!getResources().getConfiguration().getLocales().get(0).getLanguage().equals(com.beaconfinder.app.data.AppLanguage.locale(this).getLanguage())) {
+            recreate(); return;
+        }
+
+        refreshMainFilters();
         baseAdapter.notifyDataSetChanged();
         showCurrentBaseBeacons();
 
@@ -227,9 +281,9 @@ public final class MainActivity extends AppCompatActivity
 
         BluetoothStationManager bleMgr = BluetoothStationManager.getInstance(this);
         if (bleMgr.isConnected()) {
-            binding.connectionStatus.setText("● BLEロケーター: 接続完了");
+            binding.connectionStatus.setText(com.beaconfinder.app.data.AppLanguage.text("● BLEロケーター: 接続完了"));
             binding.connectionStatus.setTextColor(getColor(R.color.online));
-            binding.operationStatus.setText("BLEロケーターに接続中です。ビーコンのバーコードをスキャンして点灯できます");
+            binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("BLEロケーターに接続中です。ビーコンのバーコードをスキャンして点灯できます"));
         } else {
             if (config.isBluetoothBase || config.isMiniBase) {
                 checkAndRequestBlePermissions();
@@ -251,16 +305,16 @@ public final class MainActivity extends AppCompatActivity
                 lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER));
 
         if (!gpsEnabled) {
-            binding.operationStatus.setText("⚠ BLE接続には「位置情報」のONが必要です。設定→位置情報をONにしてください");
+            binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("⚠ BLE接続には「位置情報」のONが必要です。設定→位置情報をONにしてください"));
             binding.operationStatus.setTextColor(getColor(R.color.warning));
             // 設定画面を開くよう促す
             new androidx.appcompat.app.AlertDialog.Builder(this)
-                    .setTitle("位置情報をONにしてください")
-                    .setMessage("Bluetoothロケーターのスキャンには、Androidの「位置情報（GPS）」が有効になっている必要があります。\n\n設定→位置情報 をONにしてからアプリを再起動してください。")
-                    .setPositiveButton("設定を開く", (d, w) -> {
+                    .setTitle(com.beaconfinder.app.data.AppLanguage.text("位置情報をONにしてください"))
+                    .setMessage(com.beaconfinder.app.data.AppLanguage.text("Bluetoothロケーターのスキャンには、Androidの「位置情報（GPS）」が有効になっている必要があります。\n\n設定→位置情報 をONにしてからアプリを再起動してください。"))
+                    .setPositiveButton(com.beaconfinder.app.data.AppLanguage.text("設定を開く"), (d, w) -> {
                         startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                     })
-                    .setNegativeButton("後で", null)
+                    .setNegativeButton(com.beaconfinder.app.data.AppLanguage.text("後で"), null)
                     .show();
             return;
         }
@@ -289,7 +343,7 @@ public final class MainActivity extends AppCompatActivity
         // Step3: Bluetoothが有効か確認
         android.bluetooth.BluetoothAdapter btAdapter = android.bluetooth.BluetoothAdapter.getDefaultAdapter();
         if (btAdapter == null || !btAdapter.isEnabled()) {
-            binding.operationStatus.setText("⚠ Bluetoothが無効です。ONにしてください");
+            binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("⚠ Bluetoothが無効です。ONにしてください"));
             startActivity(new Intent(android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE));
             return;
         }
@@ -308,20 +362,20 @@ public final class MainActivity extends AppCompatActivity
                 runOnUiThread(() -> {
                     switch (state) {
                         case feasyblue.BleStateTypes.Connected:
-                            binding.connectionStatus.setText("● BLEロケーター: 接続完了 (" + rssi + " dBm)");
+                            binding.connectionStatus.setText(com.beaconfinder.app.data.AppLanguage.text("● BLEロケーター: 接続完了 (") + rssi + " dBm)");
                             binding.connectionStatus.setTextColor(getColor(R.color.online));
-                            binding.operationStatus.setText("BLEロケーターに接続しました。ビーコンのバーコードをスキャンして点灯できます");
+                            binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("BLEロケーターに接続しました。ビーコンのバーコードをスキャンして点灯できます"));
                             break;
                         case feasyblue.BleStateTypes.Scaning:
-                            binding.connectionStatus.setText("● BLE: スキャン中 (XY-FlashFind)…");
+                            binding.connectionStatus.setText(com.beaconfinder.app.data.AppLanguage.text("● BLE: スキャン中 (XY-FlashFind)…"));
                             binding.connectionStatus.setTextColor(getColor(R.color.warning));
                             break;
                         case feasyblue.BleStateTypes.Connecting:
-                            binding.connectionStatus.setText("● BLE: 接続試行中…");
+                            binding.connectionStatus.setText(com.beaconfinder.app.data.AppLanguage.text("● BLE: 接続試行中…"));
                             binding.connectionStatus.setTextColor(getColor(R.color.warning));
                             break;
                         default:
-                            binding.connectionStatus.setText("● BLE: 未接続");
+                            binding.connectionStatus.setText(com.beaconfinder.app.data.AppLanguage.text("● BLE: 未接続"));
                             binding.connectionStatus.setTextColor(getColor(R.color.offline));
                             break;
                     }
@@ -337,7 +391,7 @@ public final class MainActivity extends AppCompatActivity
         if (!bleMgr.isConnected()) {
             int filter = config.signalFilterRssi > 0 ? -config.signalFilterRssi : -90;
             bleMgr.autoConnect(filter);
-            binding.operationStatus.setText("BLEロケーター (XY-FlashFind) を検索中…");
+            binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("BLEロケーター (XY-FlashFind) を検索中…"));
         }
     }
 
@@ -352,7 +406,7 @@ public final class MainActivity extends AppCompatActivity
             if (allGranted) {
                 autoConnectBluetoothBase();
             } else {
-                toast("Bluetooth/位置情報の権限が必要です。設定→アプリから許可してください");
+                toast(com.beaconfinder.app.data.AppLanguage.text("Bluetooth/位置情報の権限が必要です。設定→アプリから許可してください"));
             }
         }
     }
@@ -362,7 +416,7 @@ public final class MainActivity extends AppCompatActivity
     private BaseStation ensureActiveBaseStation() {
         BaseStation base = currentBase();
         if (base == null) {
-            BaseStation defaultBle = new BaseStation("XY-FlashFind", "Bluetoothロケーター (Sanray)");
+            BaseStation defaultBle = new BaseStation("XY-FlashFind", com.beaconfinder.app.data.AppLanguage.text("Bluetoothロケーター (Sanray)"));
             store.addBase(defaultBle);
             refreshBasesAndSelect(defaultBle.sn);
             return defaultBle;
@@ -423,11 +477,11 @@ public final class MainActivity extends AppCompatActivity
         try {
             if (scanPurpose == ScanPurpose.BASE) {
                 BaseInfo info = parseBaseInfo(raw);
-                String defaultName = "ロケーター " + (store.bases().size() + 1);
-                promptName("ロケーターを追加", defaultName, name -> {
+                String defaultName = com.beaconfinder.app.data.AppLanguage.text("ロケーター ") + (store.bases().size() + 1);
+                promptName(com.beaconfinder.app.data.AppLanguage.text("ロケーターを追加"), defaultName, name -> {
                     store.addBase(new BaseStation(info.sn, name));
                     refreshBasesAndSelect(info.sn);
-                    binding.operationStatus.setText("ロケーター " + info.sn + " を追加しました。接続中…");
+                    binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("ロケーター ") + info.sn + com.beaconfinder.app.data.AppLanguage.text(" を追加しました。接続中…"));
                     connectCurrentBase();
                 });
             } else {
@@ -437,16 +491,16 @@ public final class MainActivity extends AppCompatActivity
                 AppConfig config = AppConfig.getInstance(this);
 
                 if (config.fastBind) {
-                    Beacon beacon = new Beacon(code, "ビーコン " + suffix, base.sn);
+                    Beacon beacon = new Beacon(code, com.beaconfinder.app.data.AppLanguage.text("ビーコン ") + suffix, base.sn);
                     store.addBeacon(beacon);
                     showCurrentBaseBeacons();
-                    binding.operationStatus.setText("ビーコン " + code + " 高速バインド完了、点灯中…");
+                    binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("ビーコン ") + code + com.beaconfinder.app.data.AppLanguage.text(" 高速バインド完了、点灯中…"));
                     int delay = Math.max(50, config.bindDelayMs);
                     mainHandler.postDelayed(() -> {
                         controlBeaconWithConfig(beacon);
                     }, delay);
                 } else {
-                    promptName("ビーコンを追加", "ビーコン " + suffix, name -> {
+                    promptName(com.beaconfinder.app.data.AppLanguage.text("ビーコンを追加"), com.beaconfinder.app.data.AppLanguage.text("ビーコン ") + suffix, name -> {
                         Beacon beacon = new Beacon(code, name, base.sn);
                         store.addBeacon(beacon);
                         showCurrentBaseBeacons();
@@ -456,8 +510,8 @@ public final class MainActivity extends AppCompatActivity
             }
         } catch (Exception error) {
             new AlertDialog.Builder(this)
-                    .setTitle("QRコードの解析エラー")
-                    .setMessage(error.getMessage() + "\n\nスキャン内容: " + raw)
+                    .setTitle(com.beaconfinder.app.data.AppLanguage.text("QRコードの解析エラー"))
+                    .setMessage(error.getMessage() + com.beaconfinder.app.data.AppLanguage.text("\n\nスキャン内容: ") + raw)
                     .setPositiveButton("OK", null)
                     .show();
         }
@@ -481,7 +535,7 @@ public final class MainActivity extends AppCompatActivity
 
     private BaseInfo parseBaseInfo(String raw) throws Exception {
         if (raw == null || raw.trim().isEmpty()) {
-            throw new IllegalArgumentException("QRコードの内容が空です");
+            throw new IllegalArgumentException(com.beaconfinder.app.data.AppLanguage.text("QRコードの内容が空です"));
         }
         String trimmed = raw.trim().replace("\uFEFF", "").replaceAll("^[\"']+|[\"']+$", "").trim();
 
@@ -555,12 +609,12 @@ public final class MainActivity extends AppCompatActivity
             return new BaseInfo(raw, cleaned, "", 5000, "");
         }
 
-        throw new IllegalArgumentException("ロケーターのSN、IP、またはMACアドレスを認識できませんでした。\n\n内容: " + raw);
+        throw new IllegalArgumentException(com.beaconfinder.app.data.AppLanguage.text("ロケーターのSN、IP、またはMACアドレスを認識できませんでした。\n\n内容: ") + raw);
     }
 
     private String parseBeaconCode(String raw) throws Exception {
         if (raw == null || raw.trim().isEmpty()) {
-            throw new IllegalArgumentException("QRコードの内容が空です");
+            throw new IllegalArgumentException(com.beaconfinder.app.data.AppLanguage.text("QRコードの内容が空です"));
         }
         String trimmed = raw.trim().replace("\uFEFF", "").replaceAll("^[\"']+|[\"']+$", "").trim();
 
@@ -576,7 +630,7 @@ public final class MainActivity extends AppCompatActivity
 
         String value = trimmed.replaceFirst("(?i)^(TAG|BEACON|ID|CODE|SN)\\s*[:=_-]\\s*", "").replaceAll("[\\s-]", "");
         if (!value.matches("\\d+")) {
-            throw new IllegalArgumentException("ビーコンの10進数コードが見つかりません。\n\n内容: " + raw);
+            throw new IllegalArgumentException(com.beaconfinder.app.data.AppLanguage.text("ビーコンの10進数コードが見つかりません。\n\n内容: ") + raw);
         }
         if (value.length() > 10) value = value.substring(value.length() - 10);
         return BaseStationGateway.normalizeNumericCode(value);
@@ -607,13 +661,13 @@ public final class MainActivity extends AppCompatActivity
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(title)
                 .setView(input)
-                .setNegativeButton("キャンセル", null)
-                .setPositiveButton("保存", null)
+                .setNegativeButton(com.beaconfinder.app.data.AppLanguage.text("キャンセル"), null)
+                .setPositiveButton(com.beaconfinder.app.data.AppLanguage.text("保存"), null)
                 .create();
         dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String name = input.getText().toString().trim();
             if (name.isEmpty()) {
-                input.setError("名称を入力してください");
+                input.setError(com.beaconfinder.app.data.AppLanguage.text("名称を入力してください"));
                 return;
             }
             receiver.receive(name);
@@ -633,7 +687,7 @@ public final class MainActivity extends AppCompatActivity
         layout.setPadding(padding, padding, padding, padding);
 
         TextView infoText = new TextView(this);
-        infoText.setText("LAN内のロケーターを探索しています (UDPポート9001/9002)…\n検出されたロケーターをタップすると即座に追加・接続されます。");
+        infoText.setText(com.beaconfinder.app.data.AppLanguage.text("LAN内のロケーターを探索しています (UDPポート9001/9002)…\n検出されたロケーターをタップすると即座に追加・接続されます。"));
         infoText.setTextColor(Color.parseColor("#334155"));
         infoText.setPadding(0, 0, 0, padding / 2);
         layout.addView(infoText);
@@ -646,11 +700,11 @@ public final class MainActivity extends AppCompatActivity
         layout.addView(scrollView);
 
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("LAN内ロケーター検索 / 手動入力")
+                .setTitle(com.beaconfinder.app.data.AppLanguage.text("LAN内ロケーター検索 / 手動入力"))
                 .setView(layout)
-                .setNeutralButton("手動入力", (d, w) -> showManualInputDialog())
-                .setNegativeButton("閉じる", null)
-                .setPositiveButton("再検索", null)
+                .setNeutralButton(com.beaconfinder.app.data.AppLanguage.text("手動入力"), (d, w) -> showManualInputDialog())
+                .setNegativeButton(com.beaconfinder.app.data.AppLanguage.text("閉じる"), null)
+                .setPositiveButton(com.beaconfinder.app.data.AppLanguage.text("再検索"), null)
                 .create();
 
         Runnable refreshList = () -> {
@@ -658,7 +712,7 @@ public final class MainActivity extends AppCompatActivity
             synchronized (discoveredBases) {
                 if (discoveredBases.isEmpty()) {
                     TextView empty = new TextView(this);
-                    empty.setText("（現在検出されているロケーターはありません。同一Wi-Fiに接続されているか確認してください）");
+                    empty.setText(com.beaconfinder.app.data.AppLanguage.text("（現在検出されているロケーターはありません。同一Wi-Fiに接続されているか確認してください）"));
                     empty.setPadding(0, padding / 2, 0, padding / 2);
                     empty.setTextColor(Color.parseColor("#64748B"));
                     listContainer.addView(empty);
@@ -670,7 +724,7 @@ public final class MainActivity extends AppCompatActivity
                         row.setBackgroundResource(android.R.drawable.list_selector_background);
 
                         TextView title = new TextView(this);
-                        title.setText("SN: " + base.id + " (" + (base.appOk ? "接続可能" : "他クライアント接続中") + ")");
+                        title.setText("SN: " + base.id + " (" + (base.appOk ? com.beaconfinder.app.data.AppLanguage.text("接続可能") : com.beaconfinder.app.data.AppLanguage.text("他クライアント接続中")) + ")");
                         title.setTextSize(16);
                         title.setTextColor(base.appOk ? Color.parseColor("#047857") : Color.RED);
                         title.getPaint().setFakeBoldText(true);
@@ -684,10 +738,10 @@ public final class MainActivity extends AppCompatActivity
 
                         row.setOnClickListener(v -> {
                             dialog.dismiss();
-                            promptName("ロケーターを追加", "ロケーター " + (store.bases().size() + 1), name -> {
+                            promptName(com.beaconfinder.app.data.AppLanguage.text("ロケーターを追加"), com.beaconfinder.app.data.AppLanguage.text("ロケーター ") + (store.bases().size() + 1), name -> {
                                 store.addBase(new BaseStation(base.id, name));
                                 refreshBasesAndSelect(base.id);
-                                binding.operationStatus.setText("ロケーター " + base.id + " を選択しました");
+                                binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("ロケーター ") + base.id + com.beaconfinder.app.data.AppLanguage.text(" を選択しました"));
                                 connectCurrentBase();
                             });
                         });
@@ -702,7 +756,7 @@ public final class MainActivity extends AppCompatActivity
         dialog.setOnShowListener(d -> {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                 gateway.triggerSubnetBroadcast();
-                toast("再検索パケットを送信しました");
+                toast(com.beaconfinder.app.data.AppLanguage.text("再検索パケットを送信しました"));
                 mainHandler.postDelayed(refreshList, 800);
             });
         });
@@ -715,7 +769,7 @@ public final class MainActivity extends AppCompatActivity
 
     private void showManualInputDialog() {
         EditText input = new EditText(this);
-        input.setHint("例: 192.168.1.50 または QJ000000000001");
+        input.setHint(com.beaconfinder.app.data.AppLanguage.text("例: 192.168.1.50 または QJ000000000001"));
         input.setTextColor(Color.parseColor("#0F172A"));
         input.setHintTextColor(Color.parseColor("#94A3B8"));
         input.setBackgroundResource(R.drawable.bg_config_input);
@@ -724,17 +778,17 @@ public final class MainActivity extends AppCompatActivity
         input.setPadding(paddingH, paddingV, paddingH, paddingV);
 
         new AlertDialog.Builder(this)
-                .setTitle("IPアドレスまたはSNの手動入力")
-                .setMessage("ロケーターのIPアドレスまたはSNを入力してください。")
+                .setTitle(com.beaconfinder.app.data.AppLanguage.text("IPアドレスまたはSNの手動入力"))
+                .setMessage(com.beaconfinder.app.data.AppLanguage.text("ロケーターのIPアドレスまたはSNを入力してください。"))
                 .setView(input)
-                .setNegativeButton("キャンセル", null)
-                .setPositiveButton("追加して接続", (d, which) -> {
+                .setNegativeButton(com.beaconfinder.app.data.AppLanguage.text("キャンセル"), null)
+                .setPositiveButton(com.beaconfinder.app.data.AppLanguage.text("追加して接続"), (d, which) -> {
                     String val = input.getText().toString().trim();
                     if (val.isEmpty()) {
-                        toast("入力内容が空です");
+                        toast(com.beaconfinder.app.data.AppLanguage.text("入力内容が空です"));
                         return;
                     }
-                    promptName("ロケーターの名称", "ロケーター " + (store.bases().size() + 1), name -> {
+                    promptName(com.beaconfinder.app.data.AppLanguage.text("ロケーターの名称"), com.beaconfinder.app.data.AppLanguage.text("ロケーター ") + (store.bases().size() + 1), name -> {
                         store.addBase(new BaseStation(val, name));
                         refreshBasesAndSelect(val);
                         connectCurrentBase();
@@ -758,14 +812,160 @@ public final class MainActivity extends AppCompatActivity
         return item instanceof BaseStation ? (BaseStation) item : null;
     }
 
+    private void setupMainSearchAndFilters() {
+        binding.mainSearchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                mainSearchQuery = s.toString().trim();
+                binding.btnClearMainSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+                showCurrentBaseBeacons();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        binding.btnClearMainSearch.setOnClickListener(v -> binding.mainSearchInput.setText(""));
+
+        mainWarehouseFilterAdapter = new ArrayAdapter<>(this, R.layout.item_spinner_selected);
+        mainWarehouseFilterAdapter.setDropDownViewResource(R.layout.item_spinner_dropdown);
+        binding.mainFilterWarehouseSpinner.setAdapter(mainWarehouseFilterAdapter);
+
+        mainAreaFilterAdapter = new ArrayAdapter<>(this, R.layout.item_spinner_selected);
+        mainAreaFilterAdapter.setDropDownViewResource(R.layout.item_spinner_dropdown);
+        binding.mainFilterAreaSpinner.setAdapter(mainAreaFilterAdapter);
+
+        binding.mainFilterWarehouseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0) {
+                    mainFilterWarehouseId = "";
+                } else if (position - 1 < mainFilterWarehouses.size()) {
+                    mainFilterWarehouseId = mainFilterWarehouses.get(position - 1).id;
+                }
+                refreshMainAreaFilterSpinner();
+                showCurrentBaseBeacons();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                mainFilterWarehouseId = "";
+                showCurrentBaseBeacons();
+            }
+        });
+
+        binding.mainFilterAreaSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0) {
+                    mainFilterAreaId = "";
+                } else if (position - 1 < mainFilterAreas.size()) {
+                    mainFilterAreaId = mainFilterAreas.get(position - 1).id;
+                }
+                showCurrentBaseBeacons();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                mainFilterAreaId = "";
+                showCurrentBaseBeacons();
+            }
+        });
+
+        refreshMainFilters();
+    }
+
+    private void refreshMainFilters() {
+        mainFilterWarehouses.clear();
+        mainFilterWarehouses.addAll(warehouseStore.getWarehouses());
+
+        mainWarehouseFilterAdapter.clear();
+        mainWarehouseFilterAdapter.add(com.beaconfinder.app.data.AppLanguage.text("すべての倉庫"));
+        for (Warehouse w : mainFilterWarehouses) {
+            mainWarehouseFilterAdapter.add(w.name);
+        }
+        mainWarehouseFilterAdapter.notifyDataSetChanged();
+
+        refreshMainAreaFilterSpinner();
+    }
+
+    private void refreshMainAreaFilterSpinner() {
+        mainFilterAreas.clear();
+        if (mainFilterWarehouseId.isEmpty()) {
+            mainFilterAreas.addAll(warehouseStore.getAreas());
+        } else {
+            mainFilterAreas.addAll(warehouseStore.getAreasForWarehouse(mainFilterWarehouseId));
+        }
+
+        mainAreaFilterAdapter.clear();
+        mainAreaFilterAdapter.add(com.beaconfinder.app.data.AppLanguage.text("すべてのエリア"));
+        for (Area a : mainFilterAreas) {
+            mainAreaFilterAdapter.add(a.name);
+        }
+        mainAreaFilterAdapter.notifyDataSetChanged();
+        binding.mainFilterAreaSpinner.setSelection(0);
+        mainFilterAreaId = "";
+    }
+
     private void showCurrentBaseBeacons() {
         BaseStation base = currentBase();
-        List<Beacon> items = base == null ? Collections.emptyList() : store.beaconsFor(base.sn);
-        beaconAdapter.submit(items);
-        boolean empty = items.isEmpty();
+        List<Beacon> allItems = base == null ? Collections.emptyList() : store.beaconsFor(base.sn);
+
+        List<Beacon> filtered = new ArrayList<>();
+        String q = (mainSearchQuery != null) ? mainSearchQuery.trim().toLowerCase(Locale.ROOT) : "";
+
+        for (Beacon b : allItems) {
+            Product p = warehouseStore.getProductByBeaconCode(b.code);
+
+            // 倉庫フィルター
+            if (!mainFilterWarehouseId.isEmpty()) {
+                if (p == null || !mainFilterWarehouseId.equals(p.warehouseId)) {
+                    continue;
+                }
+            }
+
+            // エリアフィルター
+            if (!mainFilterAreaId.isEmpty()) {
+                if (p == null || !mainFilterAreaId.equals(p.areaId)) {
+                    continue;
+                }
+            }
+
+            // 検索キーワード
+            if (!q.isEmpty()) {
+                boolean matchCode = b.code.toLowerCase(Locale.ROOT).contains(q);
+                boolean matchName = b.name.toLowerCase(Locale.ROOT).contains(q);
+                boolean matchProd = false;
+                if (p != null) {
+                    boolean pName = p.name != null && p.name.toLowerCase(Locale.ROOT).contains(q);
+                    boolean pSku = p.sku != null && p.sku.toLowerCase(Locale.ROOT).contains(q);
+                    boolean pMemo = p.memo != null && p.memo.toLowerCase(Locale.ROOT).contains(q);
+                    matchProd = pName || pSku || pMemo;
+                }
+                if (!matchCode && !matchName && !matchProd) {
+                    continue;
+                }
+            }
+
+            filtered.add(b);
+        }
+
+        beaconAdapter.submit(filtered);
+        boolean empty = filtered.isEmpty();
         binding.emptyView.setVisibility(empty ? View.VISIBLE : View.GONE);
         binding.beaconList.setVisibility(empty ? View.GONE : View.VISIBLE);
-        binding.emptyView.setText(base == null ? "先にロケーターを追加してください" : "登録されたビーコンがありません。QRコードをスキャンして追加してください");
+
+        if (base == null) {
+            binding.emptyView.setText(com.beaconfinder.app.data.AppLanguage.text("先にロケーターを追加してください"));
+        } else if (allItems.isEmpty()) {
+            binding.emptyView.setText(com.beaconfinder.app.data.AppLanguage.text("登録されたビーコンがありません。QRコードをスキャンして追加してください"));
+        } else {
+            binding.emptyView.setText(com.beaconfinder.app.data.AppLanguage.text("検索条件「") + mainSearchQuery + com.beaconfinder.app.data.AppLanguage.text("」に一致する商品・ビーコンがありません"));
+        }
+
         suppressSelectAllCallback = true;
         binding.selectAllCheckbox.setChecked(false);
         suppressSelectAllCallback = false;
@@ -773,7 +973,7 @@ public final class MainActivity extends AppCompatActivity
         if (online && (base == null || !base.sn.equalsIgnoreCase(onlineSn))) {
             userDisconnected = true;
             gateway.disconnect();
-            setOfflineUi("ロケーターが切り替えられました。再接続してください");
+            setOfflineUi(com.beaconfinder.app.data.AppLanguage.text("ロケーターが切り替えられました。再接続してください"));
         }
     }
 
@@ -781,7 +981,7 @@ public final class MainActivity extends AppCompatActivity
         if (online) {
             userDisconnected = true;
             gateway.disconnect();
-            setOfflineUi("切断済み");
+            setOfflineUi(com.beaconfinder.app.data.AppLanguage.text("切断済み"));
         } else {
             connectCurrentBase();
         }
@@ -790,7 +990,7 @@ public final class MainActivity extends AppCompatActivity
     private void connectCurrentBase() {
         BaseStation base = currentBase();
         if (base == null) {
-            toast("先にロケーターを追加してください");
+            toast(com.beaconfinder.app.data.AppLanguage.text("先にロケーターを追加してください"));
             return;
         }
 
@@ -803,18 +1003,18 @@ public final class MainActivity extends AppCompatActivity
         userDisconnected = false;
         online = false;
         onlineSn = "";
-        binding.connectionStatus.setText("● 接続試行中: " + base.sn);
+        binding.connectionStatus.setText(com.beaconfinder.app.data.AppLanguage.text("● 接続試行中: ") + base.sn);
         binding.connectionStatus.setTextColor(getColor(R.color.warning));
-        binding.connectButton.setText("キャンセル");
+        binding.connectButton.setText(com.beaconfinder.app.data.AppLanguage.text("キャンセル"));
         gateway.connect(base.sn);
 
         // 7秒のタイムアウト監視
         connectTimeoutRunnable = () -> {
             if (!online && !userDisconnected) {
-                binding.connectionStatus.setText("● 未接続（応答なし）");
+                binding.connectionStatus.setText(com.beaconfinder.app.data.AppLanguage.text("● 未接続（応答なし）"));
                 binding.connectionStatus.setTextColor(getColor(R.color.offline));
-                binding.connectButton.setText("再試行");
-                binding.operationStatus.setText("ロケーターからの応答がありません。同一Wi-Fiルーター（LAN）に接続されているか確認してください");
+                binding.connectButton.setText(com.beaconfinder.app.data.AppLanguage.text("再試行"));
+                binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("ロケーターからの応答がありません。同一Wi-Fiルーター（LAN）に接続されているか確認してください"));
             }
         };
         mainHandler.postDelayed(connectTimeoutRunnable, 7000);
@@ -824,10 +1024,10 @@ public final class MainActivity extends AppCompatActivity
         BaseStation base = currentBase();
         if (base == null) return;
         new AlertDialog.Builder(this)
-                .setTitle("ロケーターを削除しますか？")
-                .setMessage("ロケーター「" + base.name + "」および紐づくビーコン情報がリストから削除されます。")
-                .setNegativeButton("キャンセル", null)
-                .setPositiveButton("削除", (dialog, which) -> {
+                .setTitle(com.beaconfinder.app.data.AppLanguage.text("ロケーターを削除しますか？"))
+                .setMessage(com.beaconfinder.app.data.AppLanguage.text("ロケーター「") + base.name + com.beaconfinder.app.data.AppLanguage.text("」および紐づくビーコン情報がリストから削除されます。"))
+                .setNegativeButton(com.beaconfinder.app.data.AppLanguage.text("キャンセル"), null)
+                .setPositiveButton(com.beaconfinder.app.data.AppLanguage.text("削除"), (dialog, which) -> {
                     try {
                         if (base.sn.equalsIgnoreCase(onlineSn)) {
                             userDisconnected = true;
@@ -839,7 +1039,7 @@ public final class MainActivity extends AppCompatActivity
                         store.removeBase(base.sn);
                         baseAdapter.notifyDataSetChanged();
                         suppressSelectAllCallback = false;
-                        setOfflineUi("未接続");
+                        setOfflineUi(com.beaconfinder.app.data.AppLanguage.text("未接続"));
                         // 残りのロケーターがあれば先頭を選択
                         if (!store.bases().isEmpty()) {
                             binding.baseSpinner.setSelection(0);
@@ -848,7 +1048,7 @@ public final class MainActivity extends AppCompatActivity
                     } catch (Exception ex) {
                         suppressSelectAllCallback = false;
                         android.util.Log.e("MainActivity", "Delete base error", ex);
-                        Toast.makeText(this, "削除中にエラーが発生しました: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, com.beaconfinder.app.data.AppLanguage.text("削除中にエラーが発生しました: ") + ex.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 }).show();
     }
@@ -856,13 +1056,17 @@ public final class MainActivity extends AppCompatActivity
     private void controlSelected(boolean stop) {
         List<Beacon> selected = beaconAdapter.selected();
         if (selected.isEmpty()) {
-            toast("少なくとも1つのビーコンを選択してください");
+            toast(com.beaconfinder.app.data.AppLanguage.text("少なくとも1つのビーコンを選択してください"));
             return;
         }
         control(selected, stop);
     }
 
     private void controlBeaconWithConfig(Beacon beacon) {
+        if (SharedSync.get(this).configured()) {
+            control(Collections.singletonList(beacon), false);
+            return;
+        }
         AppConfig config = AppConfig.getInstance(this);
         BluetoothStationManager bleMgr = BluetoothStationManager.getInstance(this);
         List<String> codes = Collections.singletonList(beacon.code);
@@ -878,39 +1082,45 @@ public final class MainActivity extends AppCompatActivity
             if (bleMgr.isConnected()) {
                 String ret = bleMgr.light(codes, color, flash, beep, workTimeSec, flashInterval);
                 if ("0".equals(ret)) {
-                    binding.operationStatus.setText("ビーコン " + beacon.code + " 接続・点灯成功！");
+                    binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("ビーコン ") + beacon.code + com.beaconfinder.app.data.AppLanguage.text(" 接続・点灯成功！"));
                     binding.operationStatus.setTextColor(getColor(R.color.online));
-                    toast("ビーコン " + beacon.code + " 点灯成功！");
+                    toast(com.beaconfinder.app.data.AppLanguage.text("ビーコン ") + beacon.code + com.beaconfinder.app.data.AppLanguage.text(" 点灯成功！"));
                 } else {
-                    binding.operationStatus.setText("点灯失敗 (SDK応答: " + ret + ")");
+                    binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("点灯失敗 (SDK応答: ") + ret + ")");
                     binding.operationStatus.setTextColor(getColor(R.color.offline));
                 }
             } else if (online) {
                 String ret = gateway.light(codes, color, flash, beep);
                 if ("0".equals(ret)) {
-                    binding.operationStatus.setText("ビーコン " + beacon.code + " 接続・点灯成功（LAN）！");
+                    binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("ビーコン ") + beacon.code + com.beaconfinder.app.data.AppLanguage.text(" 接続・点灯成功（LAN）！"));
                     binding.operationStatus.setTextColor(getColor(R.color.online));
-                    toast("ビーコン " + beacon.code + " 点灯成功！");
+                    toast(com.beaconfinder.app.data.AppLanguage.text("ビーコン ") + beacon.code + com.beaconfinder.app.data.AppLanguage.text(" 点灯成功！"));
                 } else {
-                    binding.operationStatus.setText("LAN点灯失敗 (SDK: " + ret + ")");
+                    binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("LAN点灯失敗 (SDK: ") + ret + ")");
                     binding.operationStatus.setTextColor(getColor(R.color.offline));
                 }
             } else {
-                toast("ロケーター未接続。自動接続を試行中…");
+                toast(com.beaconfinder.app.data.AppLanguage.text("ロケーター未接続。自動接続を試行中…"));
                 autoConnectBluetoothBase();
             }
         } catch (Exception e) {
-            binding.operationStatus.setText("点灯制御エラー: " + e.getMessage());
+            binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("点灯制御エラー: ") + e.getMessage());
             binding.operationStatus.setTextColor(getColor(R.color.offline));
         }
     }
 
     private void control(List<Beacon> beacons, boolean stop) {
+        if (SharedSync.get(this).configured()) {
+            WarehouseBridgeService.start(this);
+            SharedSync.get(this).find(new ArrayList<>(beacons), stop, selectedColor(), binding.flashSwitch.isChecked(), binding.beepSwitch.isChecked());
+            binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("已提交联动任务，地图中可查看位置与执行状态"));
+            return;
+        }
         BluetoothStationManager bleMgr = BluetoothStationManager.getInstance(this);
         boolean isBleConnected = bleMgr.isConnected();
 
         if (!online && !isBleConnected) {
-            toast("ロケーター（LANまたはBluetooth）に接続してください");
+            toast(com.beaconfinder.app.data.AppLanguage.text("ロケーター（LANまたはBluetooth）に接続してください"));
             return;
         }
 
@@ -933,14 +1143,14 @@ public final class MainActivity extends AppCompatActivity
                         ? bleMgr.stop(codes)
                         : bleMgr.light(codes, color, flash, beep, config.lightDurationSec, config.flashIntervalSec);
                 if ("0".equals(result)) {
-                    binding.operationStatus.setText((stop ? "消灯" : "点灯") + "コマンド送信完了（Bluetooth経由 / 対象: " + codes.size() + "件）");
+                    binding.operationStatus.setText((stop ? com.beaconfinder.app.data.AppLanguage.text("消灯") : com.beaconfinder.app.data.AppLanguage.text("点灯")) + com.beaconfinder.app.data.AppLanguage.text("コマンド送信完了（Bluetooth経由 / 対象: ") + codes.size() + com.beaconfinder.app.data.AppLanguage.text("件）"));
                     binding.operationStatus.setTextColor(getColor(R.color.online));
                 } else {
-                    binding.operationStatus.setText("Bluetoothコマンド送信失敗 (コード: " + result + ")");
+                    binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("Bluetoothコマンド送信失敗 (コード: ") + result + ")");
                     binding.operationStatus.setTextColor(getColor(R.color.offline));
                 }
             } catch (Exception error) {
-                binding.operationStatus.setText("Bluetoothコマンド送信エラー: " + error.getMessage());
+                binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("Bluetoothコマンド送信エラー: ") + error.getMessage());
                 binding.operationStatus.setTextColor(getColor(R.color.offline));
             }
             return;
@@ -953,14 +1163,14 @@ public final class MainActivity extends AppCompatActivity
                     ? gateway.stop(codes)
                     : gateway.light(codes, color, flash, beep);
             if ("0".equals(result)) {
-                binding.operationStatus.setText((stop ? "消灯" : "点灯") + "コマンド送信完了（LAN経由 / 対象: " + codes.size() + "件）");
+                binding.operationStatus.setText((stop ? com.beaconfinder.app.data.AppLanguage.text("消灯") : com.beaconfinder.app.data.AppLanguage.text("点灯")) + com.beaconfinder.app.data.AppLanguage.text("コマンド送信完了（LAN経由 / 対象: ") + codes.size() + com.beaconfinder.app.data.AppLanguage.text("件）"));
                 binding.operationStatus.setTextColor(getColor(R.color.online));
             } else {
-                binding.operationStatus.setText("コマンド送信失敗 (SDKコード: " + result + ")");
+                binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("コマンド送信失敗 (SDKコード: ") + result + ")");
                 binding.operationStatus.setTextColor(getColor(R.color.offline));
             }
         } catch (Exception error) {
-            binding.operationStatus.setText("コマンド送信エラー: " + error.getMessage());
+            binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("コマンド送信エラー: ") + error.getMessage());
             binding.operationStatus.setTextColor(getColor(R.color.offline));
         }
     }
@@ -998,7 +1208,7 @@ public final class MainActivity extends AppCompatActivity
     private boolean requireOnline() {
         BaseStation base = currentBase();
         if (!online || base == null || !base.sn.equalsIgnoreCase(onlineSn)) {
-            toast("現在のロケーターに接続してください");
+            toast(com.beaconfinder.app.data.AppLanguage.text("現在のロケーターに接続してください"));
             return false;
         }
         return true;
@@ -1009,12 +1219,12 @@ public final class MainActivity extends AppCompatActivity
         onlineSn = "";
         binding.connectionStatus.setText("● " + status);
         binding.connectionStatus.setTextColor(getColor(R.color.offline));
-        binding.connectButton.setText("接続");
+        binding.connectButton.setText(com.beaconfinder.app.data.AppLanguage.text("接続"));
     }
 
     private void updateSelectionStatus() {
         int count = beaconAdapter.selected().size();
-        binding.lightSelectedButton.setText(count == 0 ? "選択分を点灯" : "選択分を点灯 (" + count + ")");
+        binding.lightSelectedButton.setText(count == 0 ? com.beaconfinder.app.data.AppLanguage.text("選択分を点灯") : com.beaconfinder.app.data.AppLanguage.text("選択分を点灯 (") + count + ")");
         suppressSelectAllCallback = true;
         binding.selectAllCheckbox.setChecked(beaconAdapter.allSelected());
         suppressSelectAllCallback = false;
@@ -1026,10 +1236,10 @@ public final class MainActivity extends AppCompatActivity
 
     @Override public void onDelete(Beacon beacon) {
         new AlertDialog.Builder(this)
-                .setTitle("ビーコンを削除しますか？")
+                .setTitle(com.beaconfinder.app.data.AppLanguage.text("ビーコンを削除しますか？"))
                 .setMessage(beacon.name + "\nID: " + beacon.code)
-                .setNegativeButton("キャンセル", null)
-                .setPositiveButton("削除", (dialog, which) -> {
+                .setNegativeButton(com.beaconfinder.app.data.AppLanguage.text("キャンセル"), null)
+                .setPositiveButton(com.beaconfinder.app.data.AppLanguage.text("削除"), (dialog, which) -> {
                     store.removeBeacon(beacon);
                     showCurrentBaseBeacons();
                 }).show();
@@ -1054,19 +1264,19 @@ public final class MainActivity extends AppCompatActivity
                     refreshBasesAndSelect(sn);
                 }
 
-                binding.connectionStatus.setText("● 接続完了 · " + sn);
+                binding.connectionStatus.setText(com.beaconfinder.app.data.AppLanguage.text("● 接続完了 · ") + sn);
                 binding.connectionStatus.setTextColor(getColor(R.color.online));
-                binding.connectButton.setText("切断");
-                binding.operationStatus.setText("ロケーターに正常に接続しました");
+                binding.connectButton.setText(com.beaconfinder.app.data.AppLanguage.text("切断"));
+                binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("ロケーターに正常に接続しました"));
             } else if (base == null || sn == null || sn.equalsIgnoreCase(base.sn) || sn.equalsIgnoreCase(onlineSn)) {
-                setOfflineUi(userDisconnected ? "切断済み" : "オフライン · 自動再接続中");
+                setOfflineUi(userDisconnected ? com.beaconfinder.app.data.AppLanguage.text("切断済み") : com.beaconfinder.app.data.AppLanguage.text("オフライン · 自動再接続中"));
             }
         });
     }
 
     @Override public void onCommandResult(boolean success, String message) {
         runOnUiThread(() -> {
-            binding.operationStatus.setText(message);
+            binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text(message));
             binding.operationStatus.setTextColor(getColor(success ? R.color.online : R.color.offline));
         });
     }
@@ -1089,9 +1299,9 @@ public final class MainActivity extends AppCompatActivity
             if (base != null && !online && !userDisconnected) {
                 if (id.equalsIgnoreCase(base.sn) || (base.sn != null && base.sn.equals(ip))) {
                     if (appControlStatus) {
-                        binding.operationStatus.setText("ロケーター " + id + " (" + ip + ") を検出しました。TCP接続を確立中…");
+                        binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("ロケーター ") + id + " (" + ip + com.beaconfinder.app.data.AppLanguage.text(") を検出しました。TCP接続を確立中…"));
                     } else {
-                        binding.operationStatus.setText("ロケーター " + id + " を検出しましたが、他のクライアントが接続中です");
+                        binding.operationStatus.setText(com.beaconfinder.app.data.AppLanguage.text("ロケーター ") + id + com.beaconfinder.app.data.AppLanguage.text(" を検出しましたが、他のクライアントが接続中です"));
                     }
                 }
             }
@@ -1112,9 +1322,8 @@ public final class MainActivity extends AppCompatActivity
         }
         gateway.setListener(null);
         userDisconnected = true;
-        gateway.disconnect();
+        if (!SharedSync.get(this).configured()) gateway.disconnect();
         releaseWifiLocks();
         super.onDestroy();
     }
 }
-

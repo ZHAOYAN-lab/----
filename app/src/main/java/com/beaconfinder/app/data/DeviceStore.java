@@ -14,6 +14,11 @@ import java.util.Iterator;
 import java.util.List;
 
 public final class DeviceStore {
+    private static DeviceStore instance;
+    public static synchronized DeviceStore getInstance(Context context) {
+        if (instance == null) instance = new DeviceStore(context.getApplicationContext());
+        return instance;
+    }
     private static final String PREFS = "beacon_finder_devices";
     private static final String KEY_BASES = "bases";
     private static final String KEY_BEACONS = "beacons";
@@ -125,5 +130,39 @@ public final class DeviceStore {
                     .putString(KEY_BEACONS, beaconArray.toString())
                     .apply();
         } catch (Exception ignored) { }
+    }
+
+    public synchronized JSONObject snapshot() throws Exception {
+        JSONObject result = new JSONObject();
+        JSONArray baseArray = new JSONArray();
+        for (BaseStation base : bases) {
+            baseArray.put(new JSONObject().put("id", base.sn.replace(":", "_")).put("sn", base.sn).put("name", base.name));
+        }
+        JSONArray beaconArray = new JSONArray();
+        for (Beacon beacon : beacons) {
+            beaconArray.put(new JSONObject().put("id", beacon.baseSn.replace(":", "_") + "_" + beacon.code)
+                    .put("code", beacon.code).put("name", beacon.name).put("baseSn", beacon.baseSn));
+        }
+        result.put("bases", baseArray).put("beacons", beaconArray);
+        return result;
+    }
+
+    public synchronized void applySnapshot(JSONObject snapshot) throws Exception {
+        if (!preferences.contains("migration_backup")) preferences.edit().putString("migration_backup", snapshot().toString()).commit();
+        JSONArray baseArray = snapshot.getJSONArray("bases");
+        JSONArray beaconArray = snapshot.getJSONArray("beacons");
+        List<BaseStation> nextBases = new ArrayList<>();
+        List<Beacon> nextBeacons = new ArrayList<>();
+        for (int i = 0; i < baseArray.length(); i++) {
+            JSONObject b = baseArray.getJSONObject(i);
+            nextBases.add(new BaseStation(b.getString("sn"), b.getString("name")));
+        }
+        for (int i = 0; i < beaconArray.length(); i++) {
+            JSONObject b = beaconArray.getJSONObject(i);
+            nextBeacons.add(new Beacon(b.getString("code"), b.getString("name"), b.getString("baseSn")));
+        }
+        bases.clear(); bases.addAll(nextBases);
+        beacons.clear(); beacons.addAll(nextBeacons);
+        save();
     }
 }

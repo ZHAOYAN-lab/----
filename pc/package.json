@@ -1,0 +1,1 @@
+{"name":"warehouse-console","private":true,"scripts":{"build":"cd ../AOABLUETOOTH/xiyou_web_code && VUE_CLI_SERVICE_CONFIG_PATH=../../pc/vue.config.js vue-cli-service build"}}

@@ -20,9 +20,16 @@ public class CustomScannerActivity extends CaptureActivity implements DecoratedB
     private ImageView btnFlash;
     private boolean isTorchOn = false;
 
+    @Override protected void onResume() {
+        super.onResume();
+        if (!getResources().getConfiguration().getLocales().get(0).getLanguage().equals(com.beaconfinder.app.data.AppLanguage.locale(this).getLanguage())) {
+            recreate(); return;
+        }
+    }
+
     @Override
     protected void attachBaseContext(android.content.Context newBase) {
-        java.util.Locale locale = java.util.Locale.JAPAN;
+        java.util.Locale locale = com.beaconfinder.app.data.AppLanguage.locale(newBase);
         java.util.Locale.setDefault(locale);
         android.content.res.Configuration config = new android.content.res.Configuration(newBase.getResources().getConfiguration());
         config.setLocale(locale);

@@ -7,3 +7,5 @@ app/release/*.jks
 *.iml
 .DS_Store
 tmp/
+pc/data/
+pc/__pycache__/

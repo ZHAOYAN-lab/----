@@ -23,7 +23,7 @@ public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDevice
         public int rssi;
 
         public BleDeviceItem(String name, String address, int rssi) {
-            this.name = name != null && !name.trim().isEmpty() ? name.trim() : "（名称未設定）";
+            this.name = name != null && !name.trim().isEmpty() ? name.trim() : com.beaconfinder.app.data.AppLanguage.text("（名称未設定）");
             this.address = address;
             this.rssi = rssi;
         }

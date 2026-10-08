@@ -44,7 +44,7 @@
             android:layout_marginHorizontal="8dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="バーコード / QRコード読取"
+            android:text="@string/ui_3dde9fd3cd"
             android:textColor="@android:color/white"
             android:textSize="17sp"
             android:textStyle="bold" />
@@ -80,7 +80,7 @@
             android:lineSpacingExtra="4dp"
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp"
-            android:text="10桁バーコードまたはQRコードを\n枠内に水平に合わせてください"
+            android:text="@string/ui_bd9020ad36"
             android:textColor="@android:color/white"
             android:textSize="14sp" />
     </LinearLayout>
@@ -101,7 +101,7 @@
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:text="スキャンを中止して戻る"
+            android:text="@string/ui_423e5c03ef"
             android:textColor="@android:color/white"
             android:textSize="15sp"
             app:cornerRadius="12dp"

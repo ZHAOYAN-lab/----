@@ -71,7 +71,7 @@
             android:layout_height="36dp"
             android:minWidth="60dp"
             android:paddingHorizontal="10dp"
-            android:text="選択"
+            android:text="@string/ui_b9fa67abca"
             android:textColor="@color/accent"
             android:textSize="12sp"
             app:cornerRadius="8dp"

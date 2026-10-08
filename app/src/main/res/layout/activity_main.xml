@@ -21,26 +21,71 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/toolbar_bg"
-            app:title="@string/app_name"
+            app:title="@string/ui_device_control"
             app:titleTextColor="@color/text_primary">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_open_config"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+            <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
+                android:layout_height="wrap_content"
                 android:layout_gravity="end|center_vertical"
-                android:layout_marginEnd="8dp"
-                android:paddingHorizontal="10dp"
-                android:text="設定"
-                android:textColor="@color/accent"
-                android:textSize="14sp"
-                app:icon="@drawable/ic_settings"
-                app:iconPadding="4dp"
-                app:iconSize="18dp"
-                app:iconTint="@color/accent" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_open_warehouse"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="6dp"
+                    android:text="@string/ui_db8a5a29ab"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    app:icon="@drawable/ic_warehouse"
+                    app:iconPadding="2dp"
+                    app:iconSize="16dp"
+                    app:iconTint="@color/accent" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_open_products"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="6dp"
+                    android:text="@string/ui_004922066e"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    app:icon="@drawable/ic_inventory"
+                    app:iconPadding="2dp"
+                    app:iconSize="16dp"
+                    app:iconTint="@color/accent" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_open_config"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="6dp"
+                    android:text="@string/ui_6329f21c41"
+                    android:textColor="@color/accent"
+                    android:textSize="13sp"
+                    app:icon="@drawable/ic_settings"
+                    app:iconPadding="2dp"
+                    app:iconSize="16dp"
+                    app:iconTint="@color/accent" />
+            </LinearLayout>
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_open_map"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginHorizontal="16dp"
+        android:text="@string/ui_1cf6dc06fd"
+        app:icon="@drawable/ic_warehouse" />
 
     <!-- Base Station Card -->
     <com.google.android.material.card.MaterialCardView
@@ -138,7 +183,7 @@
                     android:layout_height="38dp"
                     android:minWidth="0dp"
                     android:paddingHorizontal="6dp"
-                    android:text="BLE設定"
+                    android:text="@string/ui_156f0d3336"
                     android:textColor="@color/accent"
                     android:textSize="12sp"
                     app:icon="@drawable/ic_bluetooth"
@@ -166,6 +211,109 @@
                     android:textColor="@color/text_white"
                     app:backgroundTint="@color/accent"
                     app:cornerRadius="10dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Search & Filter Card (Product Name / SKU / Beacon ID) -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp"
+        app:cardBackgroundColor="@color/surface_card"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="1dp"
+        app:strokeColor="@color/card_stroke"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <!-- Search Input Box -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_config_input"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:contentDescription="Search"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/text_muted" />
+
+                <EditText
+                    android:id="@+id/main_search_input"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:hint="@string/search_product_hint"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:singleLine="true"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_muted"
+                    android:textSize="13sp" />
+
+                <ImageView
+                    android:id="@+id/btn_clear_main_search"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:contentDescription="Clear"
+                    android:src="@drawable/ic_close"
+                    android:visibility="gone"
+                    app:tint="@color/text_muted" />
+            </LinearLayout>
+
+            <!-- Quick Filter Row (Warehouse & Area) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_spinner"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="6dp">
+
+                    <Spinner
+                        android:id="@+id/main_filter_warehouse_spinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@null"
+                        android:popupBackground="#FFFFFF" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_spinner"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="6dp">
+
+                    <Spinner
+                        android:id="@+id/main_filter_area_spinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@null"
+                        android:popupBackground="#FFFFFF" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

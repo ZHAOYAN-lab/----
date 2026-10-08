@@ -27,7 +27,7 @@ public class ConfigActivity extends AppCompatActivity implements BluetoothStatio
 
     @Override
     protected void attachBaseContext(Context newBase) {
-        Locale locale = Locale.JAPAN;
+        Locale locale = com.beaconfinder.app.data.AppLanguage.locale(newBase);
         Locale.setDefault(locale);
         Configuration config = new Configuration(newBase.getResources().getConfiguration());
         config.setLocale(locale);
@@ -93,6 +93,10 @@ public class ConfigActivity extends AppCompatActivity implements BluetoothStatio
     @Override
     protected void onResume() {
         super.onResume();
+        if (!getResources().getConfiguration().getLocales().get(0).getLanguage().equals(com.beaconfinder.app.data.AppLanguage.locale(this).getLanguage())) {
+            recreate(); return;
+        }
+
         bleManager.setListener(this);
         updateBleStatusUi();
     }
@@ -106,13 +110,13 @@ public class ConfigActivity extends AppCompatActivity implements BluetoothStatio
     private void updateBleStatusUi() {
         boolean connected = bleManager.isConnected();
         if (connected) {
-            binding.tvBleStatusConfig.setText("● BLE: 接続中");
+            binding.tvBleStatusConfig.setText(com.beaconfinder.app.data.AppLanguage.text("● BLE: 接続中"));
             binding.tvBleStatusConfig.setTextColor(getColor(R.color.online));
-            binding.btnBleScanConnect.setText("BLE設定を開く");
+            binding.btnBleScanConnect.setText(com.beaconfinder.app.data.AppLanguage.text("BLE設定を開く"));
         } else {
-            binding.tvBleStatusConfig.setText("● BLE: 未接続 — タップしてデバイスを探す");
+            binding.tvBleStatusConfig.setText(com.beaconfinder.app.data.AppLanguage.text("● BLE: 未接続 — タップしてデバイスを探す"));
             binding.tvBleStatusConfig.setTextColor(getColor(R.color.offline));
-            binding.btnBleScanConnect.setText("BLEデバイスを探す");
+            binding.btnBleScanConnect.setText(com.beaconfinder.app.data.AppLanguage.text("BLEデバイスを探す"));
         }
     }
 
@@ -161,14 +165,14 @@ public class ConfigActivity extends AppCompatActivity implements BluetoothStatio
     private void onBaseSwitchChanged() {
         if (config.isBluetoothBase || config.isMiniBase) {
             if (!bleManager.isConnected()) {
-                Toast.makeText(this, "BLEデバイスを探しています...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, com.beaconfinder.app.data.AppLanguage.text("BLEデバイスを探しています..."), Toast.LENGTH_SHORT).show();
                 int filter = config.signalFilterRssi > 0 ? -config.signalFilterRssi : -90;
                 bleManager.autoConnect(filter);
             }
         } else {
             if (bleManager.isConnected()) {
                 bleManager.disconnect();
-                Toast.makeText(this, "BLEロケーターを切断しました", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, com.beaconfinder.app.data.AppLanguage.text("BLEロケーターを切断しました"), Toast.LENGTH_SHORT).show();
             }
         }
         updateBleStatusUi();
@@ -199,10 +203,10 @@ public class ConfigActivity extends AppCompatActivity implements BluetoothStatio
             int filter = config.signalFilterRssi > 0 ? -config.signalFilterRssi : -90;
             bleManager.setFilterRssi(filter);
 
-            Toast.makeText(this, "設定を保存しました", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, com.beaconfinder.app.data.AppLanguage.text("設定を保存しました"), Toast.LENGTH_SHORT).show();
             finish();
         } catch (Exception e) {
-            Toast.makeText(this, "入力値に誤りがあります。各項目を確認してください", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, com.beaconfinder.app.data.AppLanguage.text("入力値に誤りがあります。各項目を確認してください"), Toast.LENGTH_SHORT).show();
         }
     }
 

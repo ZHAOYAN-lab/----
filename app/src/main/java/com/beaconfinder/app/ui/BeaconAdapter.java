@@ -1,13 +1,16 @@
 package com.beaconfinder.app.ui;
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.beaconfinder.app.data.WarehouseStore;
 import com.beaconfinder.app.databinding.ItemBeaconBinding;
 import com.beaconfinder.app.model.Beacon;
+import com.beaconfinder.app.model.Product;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,8 +76,30 @@ public final class BeaconAdapter extends RecyclerView.Adapter<BeaconAdapter.Hold
 
         void bind(Beacon beacon) {
             binding.beaconName.setText(beacon.name);
-            binding.beaconCode.setText("ID  " + beacon.code);
-            binding.beaconState.setText(beacon.state);
+            binding.beaconCode.setText("ID " + beacon.code);
+            binding.beaconState.setText(com.beaconfinder.app.data.AppLanguage.text(beacon.state));
+
+            WarehouseStore store = WarehouseStore.getInstance(binding.getRoot().getContext());
+            Product product = store.getProductByBeaconCode(beacon.code);
+            if (product != null) {
+                binding.boundProductLayout.setVisibility(View.VISIBLE);
+                String skuPart = (product.sku != null && !product.sku.trim().isEmpty()) ? " (" + product.sku + ")" : "";
+                binding.boundProductName.setText("📦 " + product.name + skuPart);
+
+                String whName = store.getWarehouseName(product.warehouseId);
+                String arName = store.getAreaName(product.areaId);
+                StringBuilder loc = new StringBuilder("📍 ");
+                if (!whName.isEmpty()) loc.append(whName);
+                if (!arName.isEmpty()) {
+                    if (!whName.isEmpty()) loc.append(" · ");
+                    loc.append(arName);
+                }
+                if (loc.length() <= 3) loc.append(com.beaconfinder.app.data.AppLanguage.text("位置未設定"));
+                binding.boundProductLocation.setText(loc.toString());
+            } else {
+                binding.boundProductLayout.setVisibility(View.GONE);
+            }
+
             binding.selectedCheckbox.setOnCheckedChangeListener(null);
             binding.selectedCheckbox.setChecked(beacon.selected);
             binding.selectedCheckbox.setOnCheckedChangeListener((button, checked) -> {

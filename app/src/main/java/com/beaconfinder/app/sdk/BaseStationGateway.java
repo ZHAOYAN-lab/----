@@ -26,6 +26,12 @@ import UdpUtils.UdpHandle;
 import UdpUtils.UdpRecvDataHandle;
 
 public final class BaseStationGateway {
+    private static BaseStationGateway instance;
+    public static synchronized BaseStationGateway getInstance() {
+        if (instance == null) instance = new BaseStationGateway();
+        return instance;
+    }
+    public volatile String connectedSn = "";
     private static final String TAG = "BaseStationGateway";
 
     public interface Listener {
@@ -39,15 +45,23 @@ public final class BaseStationGateway {
     private final BaseReader reader = new BaseReader();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Listener listener;
+    private final java.util.concurrent.CopyOnWriteArrayList<Listener> bridgeListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+    public void addListener(Listener value) { bridgeListeners.addIfAbsent(value); }
+    public void removeListener(Listener value) { bridgeListeners.remove(value); }
+    private List<Listener> listeners() {
+        List<Listener> result = new ArrayList<>(bridgeListeners);
+        Listener ui = listener;
+        if (ui != null) result.add(ui);
+        return result;
+    }
     private volatile String targetIdentifier = "";
     private volatile boolean isBroadcasting = false;
 
     public BaseStationGateway() {
         reader.onBaseStateChangeLog = new HandlerBaseStateChangeLog() {
             @Override public void baseStateChangeLog(String sn, Boolean online) {
-                if (listener != null) {
-                    mainHandler.post(() -> listener.onConnectionChanged(sn, Boolean.TRUE.equals(online)));
-                }
+                connectedSn = Boolean.TRUE.equals(online) ? sn : "";
+                mainHandler.post(() -> { for (Listener item : listeners()) item.onConnectionChanged(sn, Boolean.TRUE.equals(online)); });
             }
         };
         reader.onBaseMsgLog = new HandlerBaseMsgLog() {
@@ -127,6 +141,7 @@ public final class BaseStationGateway {
     }
 
     public void disconnect() {
+        connectedSn = "";
         targetIdentifier = "";
         isBroadcasting = false;
         reader.disConnectBase();
@@ -213,9 +228,7 @@ public final class BaseStationGateway {
         if (data == null || data.ID == null) return;
 
         boolean appOk = "1".equals(data.AppControlStatu);
-        if (listener != null) {
-            mainHandler.post(() -> listener.onDiscoveredBase(data.ID, data.Ri, data.Rp, data.Mac, appOk));
-        }
+        mainHandler.post(() -> { for (Listener item : listeners()) item.onDiscoveredBase(data.ID, data.Ri, data.Rp, data.Mac, appOk); });
 
         String target = targetIdentifier;
         if (target != null && !target.isEmpty()) {
@@ -274,13 +287,17 @@ public final class BaseStationGateway {
     }
 
     public String light(List<String> codes, int color, boolean flash, boolean beep) {
+        return light(codes, color, flash, beep, 60, 0.5f);
+    }
+
+    public String light(List<String> codes, int color, boolean flash, boolean beep, int durationSec, float intervalSec) {
         byte rgb = (byte) (flash ? color : (color | 0x80));
         return reader.SetAcoustOpticTagsWork(
                 rgb,
                 (byte) (beep ? 0x01 : 0x00),
                 toTagIds(codes),
-                (byte) 20,
-                (byte) 5
+                (byte) Math.max(1, Math.min(255, (int) Math.ceil(durationSec / 3.0))),
+                (byte) Math.max(1, Math.min(255, Math.round(intervalSec * 10)))
         );
     }
 
@@ -309,15 +326,15 @@ public final class BaseStationGateway {
     }
 
     private void handleMessage(String data) {
-        if (listener == null || data == null) return;
-        listener.onRawMessage(data);
+        if (data == null) return;
+        mainHandler.post(() -> { for (Listener item : listeners()) item.onRawMessage(data); });
         String[] fields = (data + ",0").split(",");
         if (fields.length < 3) return;
         String command = fields[1].trim().toUpperCase(Locale.ROOT);
         if ("F4".equals(command) || "F9".equals(command)) {
             boolean success = "1".equals(fields[2]);
             String message = success ? "ロケーターがコマンドを受信しました" : "ロケーターの実行に失敗しました";
-            listener.onCommandResult(success, message);
+            mainHandler.post(() -> { for (Listener item : listeners()) item.onCommandResult(success, message); });
         } else if ("F5".equals(command) && fields.length >= 12 && "1".equals(fields[2])) {
             String code = normalizeNumericCode(fields[3]);
             String state;
@@ -327,7 +344,7 @@ public final class BaseStationGateway {
             } else {
                 state = "オンライン · 電圧 " + fields[4] + "mV · 動作中";
             }
-            listener.onBeaconReport(code, state);
+            mainHandler.post(() -> { for (Listener item : listeners()) item.onBeaconReport(code, state); });
         }
     }
 
